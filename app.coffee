@@ -109,6 +109,8 @@ timeout = 0
 prevBlock = Date.now()
 prevDiff = 0
 
+soundcardOffset = 0
+
 speaker.on('drain', ->
 	clearTimeout(timeout)
 	# Timeout fires when a write blocks
@@ -120,25 +122,26 @@ speaker.on('drain', ->
 			console.log('First block')
 			start = now
 			first = false
+			soundcardOffset = bufferSize / 44.1 / 2 / 2
+			bufferSize = 0
 			return
 
 		# When a write blocks again we can measure how empty
 		# it was before blocking. Therefore we learn where the
 		# playhead is
 		
-		idealDuration = now - start
-		realDuration = (bufferSize / 44.1 / 2 / 2).toFixed(2)
-		diff = (idealDuration - realDuration).toFixed(2)
+		idealDuration = now - start + soundcardOffset
+		realDuration = bufferSize / 44.1 / 2 / 2 + soundcardOffset
+		diff = idealDuration - realDuration
 		
 		speed = (idealDuration / realDuration).toFixed(2)
 
-		console.log('Real:', realDuration + 'ms', 'Ideal:',  idealDuration + 'ms', 'Diff:',  diff + 'ms', 'Deviation Speed:', speed + 'x')
+		console.log('Real:', realDuration.toFixed(2) + 'ms', 'Ideal:',  idealDuration.toFixed(2) + 'ms', 'Diff:',  diff.toFixed(2) + 'ms', 'Deviation Speed:', speed + 'x')
 	, 60)
 
 	if first
 		console.log('filling up..')
-	else
-		bufferSize += 4096
+	bufferSize += 4096
 )
 
 # Play a demo song
